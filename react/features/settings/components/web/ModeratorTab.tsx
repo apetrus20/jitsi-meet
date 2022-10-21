@@ -8,11 +8,24 @@ import { AbstractDialogTab } from '../../../base/dialog';
 import type { Props as AbstractDialogTabProps } from '../../../base/dialog';
 import { translate } from '../../../base/i18n/functions';
 import Checkbox from '../../../base/ui/components/web/Checkbox';
+// @ts-ignore
+import Input from '../../../base/ui/components/web/Input';
 
 /**
  * The type of the React {@code Component} props of {@link ModeratorTab}.
  */
 export type Props = AbstractDialogTabProps & WithTranslation & {
+
+    /**
+     * Whether or not the user has selected the Add Countdown feature to be
+     * enabled.
+     */
+    addCountdown: boolean;
+
+    /**
+     * The actual countdown which was set by the user .
+     */
+    countdown: string;
 
     /**
      * If set hides the reactions moderation setting.
@@ -73,6 +86,8 @@ class ModeratorTab extends AbstractDialogTab<Props> {
         this._onStartVideoMutedChanged = this._onStartVideoMutedChanged.bind(this);
         this._onStartReactionsMutedChanged = this._onStartReactionsMutedChanged.bind(this);
         this._onFollowMeEnabledChanged = this._onFollowMeEnabledChanged.bind(this);
+        this._onAddCountdownEnabledChanged = this._onAddCountdownEnabledChanged.bind(this);
+        this._onChangeCountdown = this._onChangeCountdown.bind(this);
     }
 
     /**
@@ -134,6 +149,29 @@ class ModeratorTab extends AbstractDialogTab<Props> {
     }
 
     /**
+     * Callback invoked to select if the user wants to add a countdown
+     * should be activated.
+     *
+     * @param {Object} e - The key event to handle.
+     *
+     * @returns {void}
+     */
+    _onAddCountdownEnabledChanged({ target: { checked } }: React.ChangeEvent<HTMLInputElement>) {
+        super._onChange({ addCountdown: checked });
+    }
+
+    /**
+     * Changes countdown of the meeting.
+     *
+     * @param {string} value - The number of minutes.
+     *
+     * @returns {void}
+     */
+    _onChangeCountdown(value: string) {
+        super._onChange({ countdown: value });
+    }
+
+    /**
      * Returns the React Element for modifying conference-wide settings.
      *
      * @private
@@ -147,6 +185,8 @@ class ModeratorTab extends AbstractDialogTab<Props> {
             startAudioMuted,
             startVideoMuted,
             startReactionsMuted,
+            addCountdown,
+            countdown = '',
             t // @ts-ignore
         } = this.props;
 
@@ -181,6 +221,22 @@ class ModeratorTab extends AbstractDialogTab<Props> {
                             label = { t('settings.startReactionsMuted') }
                             name = 'start-reactions-muted'
                             onChange = { this._onStartReactionsMutedChanged } /> }
+                    <>
+                        <Checkbox
+                            checked = { addCountdown }
+                            className = 'settings-checkbox'
+                            label = { t('settings.addCountdown') }
+                            name = 'add-countdown'
+                            onChange = { this._onAddCountdownEnabledChanged } />
+                        { addCountdown
+                            && <Input
+                                id = 'settings.addCountdownPlaceholder'
+                                name = 'countdown'
+                                onChange = { this._onChangeCountdown }
+                                placeholder = { t('settings.addCountdownPlaceholder') }
+                                type = 'text'
+                                value = { countdown } /> }
+                    </>
                 </div>
             </div>
         );

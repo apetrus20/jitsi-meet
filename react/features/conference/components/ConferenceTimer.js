@@ -1,11 +1,20 @@
 // @flow
 
 import { Component } from 'react';
+import type { Dispatch } from 'redux';
 
 import { renderConferenceTimer } from '../';
-import { getConferenceTimestamp } from '../../base/conference/functions';
+import { createToolbarEvent } from '../../analytics/AnalyticsEvents';
+import { sendAnalytics } from '../../analytics/functions';
+import { endConference } from '../../base/conference';
+import { getConferenceTimestamp, getCountdownTimestamp } from '../../base/conference/functions';
+import { disconnect } from '../../base/connection';
 import { getLocalizedDurationFormatter } from '../../base/i18n';
 import { connect } from '../../base/redux';
+import {
+    NOTIFICATION_TIMEOUT_TYPE,
+    showNotification
+} from '../../notifications';
 
 /**
  * The type of the React {@code Component} props of {@link ConferenceTimer}.
@@ -18,6 +27,11 @@ type Props = {
     _startTimestamp: ?number,
 
     /**
+     * The UTC timestamp representing the time when the moderator set the timer.
+     */
+     _endTimestamp: ?number,
+
+    /**
      * Style to be applied to the rendered text.
      */
     textStyle: ?Object,
@@ -25,7 +39,7 @@ type Props = {
     /**
      * The redux {@code dispatch} function.
      */
-    dispatch: Function
+    dispatch: Dispatch<any>
 };
 
 /**
@@ -36,7 +50,13 @@ type State = {
     /**
      * Value of current conference time.
      */
-    timerValue: string
+    timerValue: string,
+
+    /**
+     * Style of current conference time.
+     */
+    textStyle: Object
+
 };
 
 /**
@@ -53,6 +73,11 @@ class ConferenceTimer extends Component<Props, State> {
     _interval;
 
     /**
+     * Handle for setInterval timer.
+     */
+    _countdownInterval;
+
+    /**
      * Initializes a new {@code ConferenceTimer} instance.
      *
      * @param {Props} props - The read-only properties with which the new
@@ -62,7 +87,8 @@ class ConferenceTimer extends Component<Props, State> {
         super(props);
 
         this.state = {
-            timerValue: getLocalizedDurationFormatter(0)
+            timerValue: getLocalizedDurationFormatter(0),
+            textStyle: {}
         };
     }
 
@@ -74,6 +100,13 @@ class ConferenceTimer extends Component<Props, State> {
      */
     componentDidMount() {
         this._startTimer();
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (this.props._endTimestamp && prevProps._endTimestamp !== this.props._endTimestamp) {
+            this._stopTimer();
+            this._startCountdown();
+        }
     }
 
     /**
@@ -93,8 +126,8 @@ class ConferenceTimer extends Component<Props, State> {
      * @returns {ReactElement}
      */
     render() {
-        const { timerValue } = this.state;
-        const { _startTimestamp, textStyle } = this.props;
+        const { timerValue, textStyle } = this.state;
+        const { _startTimestamp } = this.props;
 
         if (!_startTimestamp) {
             return null;
@@ -145,6 +178,43 @@ class ConferenceTimer extends Component<Props, State> {
     }
 
     /**
+     * Start conference timer.
+     *
+     * @returns {void}
+     */
+    _startCountdown() {
+        const { dispatch } = this.props;
+
+        if (!this._countdownInterval) {
+            this._setStateFromUTC(new Date().getTime(), this.props._endTimestamp);
+
+            this._countdownInterval = setInterval(() => {
+                this._setStateFromUTC(new Date().getTime(), this.props._endTimestamp);
+                if (this.state.timerValue === '00:30') {
+                    this.setState({ textStyle: { 'color': 'red' } });
+                    dispatch(showNotification({
+                        titleArguments: {
+                            period: '30',
+                            periodType: 'seconds'
+                        },
+                        titleKey: 'notify.countdownNotice'
+                    },
+                    NOTIFICATION_TIMEOUT_TYPE.MEDIUM));
+                }
+
+                if (this.state.timerValue === '00:01') {
+                    dispatch(endConference());
+
+                    // sendAnalytics(createToolbarEvent('hangup'));
+                    // dispatch(disconnect());
+                    this._stopCountdownTimer();
+                }
+
+            }, 1000);
+        }
+    }
+
+    /**
      * Stop conference timer.
      *
      * @returns {void}
@@ -152,6 +222,17 @@ class ConferenceTimer extends Component<Props, State> {
     _stopTimer() {
         if (this._interval) {
             clearInterval(this._interval);
+        }
+    }
+
+    /**
+     * Stop conference timer.
+     *
+     * @returns {void}
+     */
+    _stopCountdownTimer() {
+        if (this._countdownInterval) {
+            clearInterval(this._countdownInterval);
         }
 
         this.setState({
@@ -167,13 +248,15 @@ class ConferenceTimer extends Component<Props, State> {
  * @param {Object} state - The Redux state.
  * @private
  * @returns {{
- *      _startTimestamp: number
+ *      _startTimestamp: number,
+*       _endTimestamp: number
  * }}
  */
 export function _mapStateToProps(state: Object) {
 
     return {
-        _startTimestamp: getConferenceTimestamp(state)
+        _startTimestamp: getConferenceTimestamp(state),
+        _endTimestamp: getCountdownTimestamp(state)
     };
 }
 

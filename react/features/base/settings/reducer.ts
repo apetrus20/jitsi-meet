@@ -17,7 +17,10 @@ import { SETTINGS_UPDATED } from './actionTypes';
 const DEFAULT_STATE: ISettingsState = {
     audioOutputDeviceId: undefined,
     avatarURL: undefined,
+    addCountdown: false,
     cameraDeviceId: undefined,
+    countdown: '',
+    countdownTimestamp: undefined,
     disableCallIntegration: undefined,
     disableCrashReporting: undefined,
     disableP2P: undefined,
@@ -52,10 +55,13 @@ const DEFAULT_STATE: ISettingsState = {
 };
 
 export interface ISettingsState {
+    addCountdown?: boolean;
     audioOutputDeviceId?: string | boolean;
     audioSettingsVisible?: boolean;
     avatarURL?: string;
     cameraDeviceId?: string | boolean;
+    countdown?: string;
+    countdownTimestamp?: number;
     disableCallIntegration?: boolean;
     disableCrashReporting?: boolean;
     disableP2P?: boolean;

@@ -357,13 +357,14 @@ function _mapStateToProps(state: IState, ownProps: any) {
             props: moderatorTabProps,
             propsUpdateFunction: (tabState: any, newProps: any) => {
                 // Updates tab props, keeping users selection
-
                 return {
                     ...newProps,
                     followMeEnabled: tabState?.followMeEnabled,
                     startAudioMuted: tabState?.startAudioMuted,
                     startVideoMuted: tabState?.startVideoMuted,
-                    startReactionsMuted: tabState?.startReactionsMuted
+                    startReactionsMuted: tabState?.startReactionsMuted,
+                    addCountdown: tabState?.addCountdown,
+                    countdown: tabState?.countdown ? tabState.countdown : ''
                 };
             },
             styles: `settings-pane ${classes.settingsDialog} moderator-pane`,

@@ -73,6 +73,15 @@ export function getLocalizedDateFormatter(dateOrTimeStamp: Date | number) {
     return moment(dateOrTimeStamp).locale(_getSupportedLocale());
 }
 
+export function getCurrentTimestamp() {
+    return moment().format('x');
+}
+
+export function addTimeToTimestamp(timestamp: number, time: number, type: any) {
+    return moment(timestamp, 'x').add(time, type)
+.format('x');
+}
+
 /**
  * Returns a localized duration formatter initialized with a
  * specific duration ({@code number}).

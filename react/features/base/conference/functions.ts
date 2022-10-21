@@ -268,6 +268,20 @@ export function getConferenceTimestamp(stateful: IStateful) {
 }
 
 /**
+* Returns the countdown timestamp .
+*
+* @param {IStateful} stateful - Reference that can be resolved to Redux
+* state with the {@code toState} function.
+* @returns {number}
+*/
+export function getCountdownTimestamp(stateful: IStateful) {
+    const state = toState(stateful);
+    const { countdownTimestamp } = state['features/base/settings'];
+
+    return countdownTimestamp;
+}
+
+/**
  * Returns the current {@code JitsiConference} which is joining or joined and is
  * not leaving. Please note the contrast with merely reading the
  * {@code conference} state of the feature base/conference which is not joining

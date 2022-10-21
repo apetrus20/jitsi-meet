@@ -8,8 +8,14 @@ import {
     setStartReactionsMuted
 } from '../base/conference';
 import { openDialog } from '../base/dialog';
-import { i18next } from '../base/i18n';
+import { addTimeToTimestamp, getCurrentTimestamp, i18next } from '../base/i18n';
 import { updateSettings } from '../base/settings';
+import {
+    showNotification
+} from '../notifications/actions';
+import {
+    NOTIFICATION_TIMEOUT_TYPE
+} from '../notifications/constants';
 import { setScreenshareFramerate } from '../screen-share/actions';
 
 import {
@@ -23,6 +29,7 @@ import {
     getProfileTabProps,
     getSoundsTabProps
 } from './functions';
+
 
 declare var APP: Object;
 
@@ -154,6 +161,28 @@ export function submitModeratorTab(newState: Object): Function {
             || newState.startVideoMuted !== currentState.startVideoMuted) {
             dispatch(setStartMutedPolicy(
                 newState.startAudioMuted, newState.startVideoMuted));
+        }
+
+        if (newState.addCountdown !== currentState.addCountdown) {
+            dispatch(updateSettings({ addCountdown: newState.addCountdown,
+                countdownTimestamp: 0,
+                countdown: '' }));
+        }
+
+        if (newState.countdown !== currentState.countdown) {
+            const timestamp = addTimeToTimestamp(getCurrentTimestamp(), parseInt(newState.countdown), 'minutes');
+
+            batch(() => {
+                dispatch(updateSettings({ countdown: newState.countdown,
+                    countdownTimestamp: timestamp }));
+                dispatch(showNotification({
+                    titleArguments: {
+                        countdown: newState.countdown
+                    },
+                    titleKey: 'notify.countdown'
+                },
+                NOTIFICATION_TIMEOUT_TYPE.MEDIUM));
+            });
         }
     };
 }

@@ -14,6 +14,8 @@ import React from 'react';
  */
 export default function renderConferenceTimer(timerValue: string, textStyle: Object) {
     return (
-        <span className = 'subject-timer'>{ timerValue }</span>
+        <span
+            className = 'subject-timer'
+            style = { textStyle }>{ timerValue }</span>
     );
 }
